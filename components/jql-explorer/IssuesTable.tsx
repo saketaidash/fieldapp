@@ -1,8 +1,7 @@
 "use client";
 
 import type { JiraIssue } from "@/types/jira";
-import type { PersonCapacity } from "@/types/capacity";
-import { ExternalLink, ChevronDown, ArrowRight } from "lucide-react";
+import { ExternalLink, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -12,8 +11,6 @@ interface Props {
   onLoadMore: () => void;
   isLoadingMore?: boolean;
   jiraBaseUrl?: string;
-  /** If provided, shows a "Suggested Assignee" column */
-  capacityPeople?: PersonCapacity[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -42,25 +39,6 @@ function getStoryPoints(issue: JiraIssue): number | null {
   return null;
 }
 
-/** Find the least utilized person who can take this issue */
-function getSuggestedAssignee(
-  issue: JiraIssue,
-  people: PersonCapacity[]
-): PersonCapacity | null {
-  const currentAssignee =
-    issue.fields.assignee?.emailAddress?.toLowerCase();
-
-  // Find available people (< 70% utilization) sorted by utilization
-  const candidates = people
-    .filter((p) => {
-      if (p.upn.toLowerCase() === currentAssignee) return false;
-      return p.utilizationPercent < 70;
-    })
-    .sort((a, b) => a.utilizationPercent - b.utilizationPercent);
-
-  return candidates[0] ?? null;
-}
-
 export function IssuesTable({
   issues,
   total,
@@ -68,7 +46,6 @@ export function IssuesTable({
   onLoadMore,
   isLoadingMore,
   jiraBaseUrl,
-  capacityPeople,
 }: Props) {
   if (issues.length === 0) {
     return (
@@ -77,8 +54,6 @@ export function IssuesTable({
       </div>
     );
   }
-
-  const showSuggested = capacityPeople && capacityPeople.length > 0;
 
   return (
     <div className="space-y-3">
@@ -112,20 +87,12 @@ export function IssuesTable({
               <th className="px-4 py-3 text-right font-medium text-muted-foreground">
                 SP
               </th>
-              {showSuggested && (
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  Suggested
-                </th>
-              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {issues.map((issue) => {
               const sp = getStoryPoints(issue);
               const statusKey = issue.fields.status.statusCategory.key;
-              const suggested = showSuggested
-                ? getSuggestedAssignee(issue, capacityPeople!)
-                : null;
 
               return (
                 <tr
@@ -183,25 +150,6 @@ export function IssuesTable({
                   <td className="px-4 py-3 text-right font-mono text-xs">
                     {sp !== null ? sp : "--"}
                   </td>
-                  {showSuggested && (
-                    <td className="px-4 py-3">
-                      {suggested ? (
-                        <div className="flex items-center gap-1 text-xs">
-                          <ArrowRight className="h-3 w-3 text-green-500" />
-                          <span className="text-green-600 font-medium">
-                            {suggested.displayName}
-                          </span>
-                          <span className="text-muted-foreground">
-                            ({suggested.utilizationPercent}%)
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          --
-                        </span>
-                      )}
-                    </td>
-                  )}
                 </tr>
               );
             })}

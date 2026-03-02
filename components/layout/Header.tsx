@@ -5,10 +5,9 @@ import { RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Command Center",
+  "/dashboard": "Funnel Overview",
+  "/capacity": "Capacity Timeline",
   "/jql-explorer": "JQL Explorer",
-  "/availability": "Team Availability",
-  "/sprint-capacity": "Sprint Capacity",
 };
 
 export function Header() {

@@ -3,19 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Crosshair,
+  Inbox,
+  CalendarDays,
   Search,
-  Calendar,
-  BarChart3,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Command Center", icon: Crosshair },
+  { href: "/dashboard", label: "Funnel Overview", icon: Inbox },
+  { href: "/capacity", label: "Capacity Timeline", icon: CalendarDays },
   { href: "/jql-explorer", label: "JQL Explorer", icon: Search },
-  { href: "/availability", label: "Availability", icon: Calendar },
-  { href: "/sprint-capacity", label: "Sprint Capacity", icon: BarChart3 },
 ];
 
 export function Sidebar() {

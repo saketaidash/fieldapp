@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTeamSchedule } from "@/lib/msgraph/schedule";
-import { buildPersonAvailability } from "@/lib/capacity/aggregator";
 import { getTeamUpns } from "@/lib/env";
 import { z } from "zod";
 
@@ -33,14 +32,7 @@ export async function POST(req: NextRequest) {
       body.intervalMinutes
     );
 
-    const availability = buildPersonAvailability(
-      schedules,
-      emails,
-      body.startDateTime,
-      body.endDateTime
-    );
-
-    return NextResponse.json({ schedules, availability });
+    return NextResponse.json({ schedules });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(

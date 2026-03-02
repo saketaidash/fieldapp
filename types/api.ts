@@ -26,6 +26,24 @@ export interface CapacitySummaryQuery {
   endDate?: string;   // ISO date
 }
 
+// ─── Survey / Funnel API shapes ──────────────────────────────────────────────
+
+export interface AssignSurveyRequest {
+  issueKey: string;
+  ecologistUpn: string;
+  surveyDurationDays: number;
+  surveyStartDate: string; // YYYY-MM-DD
+}
+
+export interface AssignSurveyResponse {
+  success: boolean;
+  assignment: import("./survey").SurveyAssignment;
+}
+
+export interface BulkAssignmentsResponse {
+  assignments: import("./survey").SurveyAssignment[];
+}
+
 // ─── Generic API error response ───────────────────────────────────────────────
 
 export interface ApiError {

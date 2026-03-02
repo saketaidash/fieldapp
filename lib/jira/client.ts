@@ -32,5 +32,10 @@ export async function jiraFetch<T>(
     throw new Error(`Jira API ${response.status} for ${path}: ${errorText}`);
   }
 
-  return response.json() as Promise<T>;
+  // Handle empty response bodies (e.g., PUT/DELETE return 200/201/204 with no body)
+  const text = await response.text();
+  if (!text || text.trim().length === 0) {
+    return undefined as unknown as T;
+  }
+  return JSON.parse(text) as T;
 }

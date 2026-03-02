@@ -1,17 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { addDays, format } from "date-fns";
 import { useJiraIssues } from "@/hooks/useJiraIssues";
-import { useCapacitySummary } from "@/hooks/useCapacitySummary";
 import { JqlInputForm } from "@/components/jql-explorer/JqlInputForm";
 import { IssuesTable } from "@/components/jql-explorer/IssuesTable";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
 import type { JiraIssue } from "@/types/jira";
-
-const today = new Date();
-const DEFAULT_START = format(today, "yyyy-MM-dd") + "T00:00:00Z";
-const DEFAULT_END = format(addDays(today, 13), "yyyy-MM-dd") + "T23:59:59Z";
 
 export default function JqlExplorerPage() {
   const { mutate, isPending, error } = useJiraIssues();
@@ -20,12 +14,6 @@ export default function JqlExplorerPage() {
   const [nextPageToken, setNextPageToken] = useState<string | undefined>();
   const [currentJql, setCurrentJql] = useState("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-  // Get capacity data for suggested assignee column
-  const { data: capacityData } = useCapacitySummary({
-    startDate: DEFAULT_START,
-    endDate: DEFAULT_END,
-  });
 
   const handleSearch = (jql: string) => {
     setCurrentJql(jql);
@@ -64,8 +52,7 @@ export default function JqlExplorerPage() {
     <div className="space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
-          Run any JQL query to pull Jira issues. The &quot;Suggested&quot; column
-          shows available team members based on current capacity.
+          Run any JQL query to pull Jira issues directly.
         </p>
       </div>
 
@@ -83,7 +70,6 @@ export default function JqlExplorerPage() {
             hasMore={!!nextPageToken}
             onLoadMore={handleLoadMore}
             isLoadingMore={isLoadingMore}
-            capacityPeople={capacityData?.people}
           />
         </div>
       )}

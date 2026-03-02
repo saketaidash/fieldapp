@@ -2,12 +2,10 @@
 
 import { useMutation } from "@tanstack/react-query";
 import type { AvailabilityRequest } from "@/types/api";
-import type { PersonAvailability } from "@/types/capacity";
 import type { ScheduleResponse } from "@/types/msgraph";
 
 interface AvailabilityResponse {
   schedules: ScheduleResponse[];
-  availability: PersonAvailability[];
 }
 
 export function useAvailability() {

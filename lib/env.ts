@@ -12,6 +12,11 @@ export const env = createEnv({
     AZURE_CLIENT_ID: z.string().min(1),
     AZURE_CLIENT_SECRET: z.string().min(1),
     TEAM_MEMBER_UPNS: z.string().min(1),
+    // Funnel JQL queries — one per pipeline stage
+    FUNNEL_JQL_CASES_RECEIVED: z.string().default("project = FIELD ORDER BY created DESC"),
+    FUNNEL_JQL_SURVEYS_ASSIGNED: z.string().default("project = FIELD AND status = 'Survey Assigned' ORDER BY created DESC"),
+    FUNNEL_JQL_SURVEYS_COMPLETED: z.string().default("project = FIELD AND status = 'Survey Completed' ORDER BY created DESC"),
+    FUNNEL_JQL_REPORTS_ISSUED: z.string().default("project = FIELD AND status = 'Report Issued' ORDER BY created DESC"),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
   experimental__runtimeEnv: process.env,
@@ -24,4 +29,14 @@ export function getTeamUpns(): string[] {
   return env.TEAM_MEMBER_UPNS.split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** Get the 4 funnel stage configurations */
+export function getFunnelStages() {
+  return [
+    { id: "cases_received" as const, label: "Cases Received", jql: env.FUNNEL_JQL_CASES_RECEIVED },
+    { id: "surveys_assigned" as const, label: "Surveys Assigned", jql: env.FUNNEL_JQL_SURVEYS_ASSIGNED },
+    { id: "surveys_completed" as const, label: "Surveys Completed", jql: env.FUNNEL_JQL_SURVEYS_COMPLETED },
+    { id: "reports_issued" as const, label: "Reports Issued", jql: env.FUNNEL_JQL_REPORTS_ISSUED },
+  ];
 }

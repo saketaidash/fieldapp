@@ -1,28 +1,51 @@
 "use client";
 
-import { useState } from "react";
-import { addDays, format } from "date-fns";
-import { useCapacitySummary } from "@/hooks/useCapacitySummary";
-import { CapacitySummaryCards } from "@/components/dashboard/CapacitySummaryCards";
-import { TeamCapacityGrid } from "@/components/dashboard/TeamCapacityGrid";
-import { TeamWorkloadChart } from "@/components/dashboard/TeamWorkloadChart";
-import { ReassignmentPanel } from "@/components/dashboard/ReassignmentPanel";
-import { WeeklyCalendarGrid } from "@/components/dashboard/WeeklyCalendarGrid";
+import { useFunnel } from "@/hooks/useFunnel";
+import { FunnelStageCards } from "@/components/funnel/FunnelStageCards";
+import { FunnelChart } from "@/components/funnel/FunnelChart";
+import { AllCasesTable } from "@/components/funnel/AllCasesTable";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
-
-const today = new Date();
-const DEFAULT_START = format(today, "yyyy-MM-dd") + "T00:00:00Z";
-const DEFAULT_END = format(addDays(today, 13), "yyyy-MM-dd") + "T23:59:59Z";
+import type { SurveyAssignment } from "@/types/survey";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
-  const [dateRange] = useState({ start: DEFAULT_START, end: DEFAULT_END });
-  const { data, isLoading, error } = useCapacitySummary({
-    startDate: dateRange.start,
-    endDate: dateRange.end,
-  });
+  const { data, isLoading, error } = useFunnel();
 
-  if (isLoading) return <LoadingSpinner text="Loading capacity data..." />;
+  // Bulk-fetch assignments for all issue keys once funnel loads
+  const [assignments, setAssignments] = useState<Map<string, SurveyAssignment>>(
+    new Map()
+  );
+
+  useEffect(() => {
+    if (!data) return;
+
+    // Collect unique issue keys across all stages
+    const keys = new Set<string>();
+    for (const stage of data.stages) {
+      for (const issue of stage.issues) {
+        keys.add(issue.key);
+      }
+    }
+    if (keys.size === 0) return;
+
+    // Fetch assignments in bulk
+    const issueKeysParam = Array.from(keys).join(",");
+    fetch(`/api/survey/assign?issueKeys=${encodeURIComponent(issueKeysParam)}`)
+      .then((res) => (res.ok ? res.json() : { assignments: [] }))
+      .then((result: { assignments: SurveyAssignment[] }) => {
+        const map = new Map<string, SurveyAssignment>();
+        for (const a of result.assignments) {
+          map.set(a.issueKey, a);
+        }
+        setAssignments(map);
+      })
+      .catch(() => {
+        // silently ignore — table just shows "Unassigned"
+      });
+  }, [data]);
+
+  if (isLoading) return <LoadingSpinner text="Loading funnel data..." />;
   if (error) return <ErrorAlert message={error.message} />;
   if (!data) return null;
 
@@ -31,46 +54,40 @@ export default function DashboardPage() {
       {/* Subtitle */}
       <div>
         <p className="text-sm text-muted-foreground">
-          Field team capacity for the next 14 days. Meetings reduce available
-          hours; tasks consume remaining capacity.
+          End-to-end visibility of field survey cases — from intake to report
+          delivery.
         </p>
       </div>
 
-      {/* Section 1: Action KPI Cards */}
-      <CapacitySummaryCards data={data} />
+      {/* Section 1: Funnel Stage KPI Cards */}
+      <FunnelStageCards stages={data.stages} />
 
-      {/* Section 2: Team Capacity Grid */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold">Team Capacity</h2>
-        <TeamCapacityGrid data={data} />
-      </div>
-
-      {/* Section 3: Reassignment Suggestions */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <ReassignmentPanel data={data} />
-      </div>
-
-      {/* Section 4: Stacked Workload Chart */}
+      {/* Section 2: Funnel Bar Chart */}
       <div className="rounded-xl border border-border bg-card p-5">
         <h2 className="mb-4 text-sm font-semibold">
-          Hours Breakdown
+          Pipeline Overview
           <span className="ml-2 text-xs font-normal text-muted-foreground">
-            Meetings + Tasks + Free time per person
+            Cases per stage
           </span>
         </h2>
-        <TeamWorkloadChart data={data} />
+        <FunnelChart stages={data.stages} />
       </div>
 
-      {/* Section 5: Weekly Calendar Overview */}
+      {/* Section 3: All Cases Table */}
       <div className="rounded-xl border border-border bg-card p-5">
         <h2 className="mb-4 text-sm font-semibold">
-          Weekly Calendar
+          All Cases
           <span className="ml-2 text-xs font-normal text-muted-foreground">
-            Daily meeting load and free time
+            Combined view across every funnel stage
           </span>
         </h2>
-        <WeeklyCalendarGrid people={data.people} />
+        <AllCasesTable stages={data.stages} assignments={assignments} />
       </div>
+
+      {/* Last updated */}
+      <p className="text-right text-xs text-muted-foreground">
+        Last updated: {new Date(data.lastUpdated).toLocaleString()}
+      </p>
     </div>
   );
 }
