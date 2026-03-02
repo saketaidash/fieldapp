@@ -4,8 +4,10 @@ import { useState } from "react";
 import { addDays, format } from "date-fns";
 import { useCapacitySummary } from "@/hooks/useCapacitySummary";
 import { CapacitySummaryCards } from "@/components/dashboard/CapacitySummaryCards";
+import { TeamCapacityGrid } from "@/components/dashboard/TeamCapacityGrid";
 import { TeamWorkloadChart } from "@/components/dashboard/TeamWorkloadChart";
-import { PersonCapacityRow } from "@/components/sprint-capacity/PersonCapacityRow";
+import { ReassignmentPanel } from "@/components/dashboard/ReassignmentPanel";
+import { WeeklyCalendarGrid } from "@/components/dashboard/WeeklyCalendarGrid";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
 
@@ -20,43 +22,54 @@ export default function DashboardPage() {
     endDate: dateRange.end,
   });
 
-  if (isLoading) return <LoadingSpinner text="Loading capacity data…" />;
+  if (isLoading) return <LoadingSpinner text="Loading capacity data..." />;
   if (error) return <ErrorAlert message={error.message} />;
   if (!data) return null;
 
   return (
     <div className="space-y-6">
-      {/* Header row */}
+      {/* Subtitle */}
       <div>
         <p className="text-sm text-muted-foreground">
-          Showing open issues + calendar availability for the next 14 days
+          Field team capacity for the next 14 days. Meetings reduce available
+          hours; tasks consume remaining capacity.
         </p>
       </div>
 
-      {/* KPI Cards */}
+      {/* Section 1: Action KPI Cards */}
       <CapacitySummaryCards data={data} />
 
-      {/* Workload Chart */}
+      {/* Section 2: Team Capacity Grid */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold">Team Capacity</h2>
+        <TeamCapacityGrid data={data} />
+      </div>
+
+      {/* Section 3: Reassignment Suggestions */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <ReassignmentPanel data={data} />
+      </div>
+
+      {/* Section 4: Stacked Workload Chart */}
       <div className="rounded-xl border border-border bg-card p-5">
         <h2 className="mb-4 text-sm font-semibold">
-          Assigned Hours vs Available Hours
+          Hours Breakdown
           <span className="ml-2 text-xs font-normal text-muted-foreground">
-            (4h per story point assumed)
+            Meetings + Tasks + Free time per person
           </span>
         </h2>
         <TeamWorkloadChart data={data} />
       </div>
 
-      {/* Per-person rows */}
-      <div className="space-y-2">
-        <h2 className="text-sm font-semibold">Individual Breakdown</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {data.people
-            .sort((a, b) => b.utilizationPercent - a.utilizationPercent)
-            .map((person) => (
-              <PersonCapacityRow key={person.upn} person={person} />
-            ))}
-        </div>
+      {/* Section 5: Weekly Calendar Overview */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h2 className="mb-4 text-sm font-semibold">
+          Weekly Calendar
+          <span className="ml-2 text-xs font-normal text-muted-foreground">
+            Daily meeting load and free time
+          </span>
+        </h2>
+        <WeeklyCalendarGrid people={data.people} />
       </div>
     </div>
   );

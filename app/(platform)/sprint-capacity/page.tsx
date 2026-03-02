@@ -8,6 +8,7 @@ import { useAvailability } from "@/hooks/useAvailability";
 import { SprintPicker } from "@/components/sprint-capacity/SprintPicker";
 import { CapacityBars } from "@/components/sprint-capacity/CapacityBars";
 import { PersonCapacityRow } from "@/components/sprint-capacity/PersonCapacityRow";
+import { ReassignmentPanel } from "@/components/dashboard/ReassignmentPanel";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorAlert } from "@/components/shared/ErrorAlert";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -18,12 +19,16 @@ import { mergeCapacityClient } from "@/lib/capacity/client-aggregator";
 
 export default function SprintCapacityPage() {
   const [selectedBoardId, setSelectedBoardId] = useState<number | null>(null);
-  const [selectedSprint, setSelectedSprint] = useState<JiraSprint | null>(null);
-  const [capacitySummary, setCapacitySummary] = useState<TeamCapacitySummary | null>(null);
+  const [selectedSprint, setSelectedSprint] = useState<JiraSprint | null>(
+    null
+  );
+  const [capacitySummary, setCapacitySummary] =
+    useState<TeamCapacitySummary | null>(null);
   const [isFetching, setIsFetching] = useState(false);
 
   const { data: boardsData, isLoading: isLoadingBoards } = useBoards();
-  const { data: sprintsData, isLoading: isLoadingSprints } = useSprints(selectedBoardId);
+  const { data: sprintsData, isLoading: isLoadingSprints } =
+    useSprints(selectedBoardId);
 
   const { mutateAsync: searchIssues } = useJiraIssues();
   const { mutateAsync: fetchAvailability } = useAvailability();
@@ -44,7 +49,10 @@ export default function SprintCapacityPage() {
         : new Date(Date.now() + 14 * 86400000).toISOString();
 
       const [issuesData, availData] = await Promise.all([
-        searchIssues({ jql: `sprint = ${sprint.id} AND statusCategory != Done`, maxResults: 100 }),
+        searchIssues({
+          jql: `sprint = ${sprint.id} AND statusCategory != Done`,
+          maxResults: 100,
+        }),
         fetchAvailability({
           emails: [],
           startDateTime: sprintStart,
@@ -53,7 +61,6 @@ export default function SprintCapacityPage() {
         }),
       ]);
 
-      // Merge on the client using availability data that already has team UPNs
       const upns = availData.availability.map((a) => a.upn);
       const summary = mergeCapacityClient(
         issuesData.issues,
@@ -76,13 +83,14 @@ export default function SprintCapacityPage() {
     setCapacitySummary(null);
   };
 
-  if (isLoadingBoards) return <LoadingSpinner text="Loading boards…" />;
+  if (isLoadingBoards) return <LoadingSpinner text="Loading boards..." />;
 
   return (
     <div className="space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
-          Select a sprint to see how story points align with team calendar availability.
+          Select a sprint to see how story points align with team calendar
+          availability. Meetings reduce effective capacity.
         </p>
       </div>
 
@@ -99,7 +107,9 @@ export default function SprintCapacityPage() {
         />
       </div>
 
-      {isFetching && <LoadingSpinner text="Fetching sprint issues and calendar data…" />}
+      {isFetching && (
+        <LoadingSpinner text="Fetching sprint issues and calendar data..." />
+      )}
 
       {!isFetching && capacitySummary && (
         <>
@@ -127,10 +137,20 @@ export default function SprintCapacityPage() {
             </div>
           )}
 
-          {/* Capacity Chart */}
+          {/* Capacity Chart — stacked bars */}
           <div className="rounded-xl border border-border bg-card p-5">
-            <h2 className="mb-4 text-sm font-semibold">Sprint Capacity Overview</h2>
+            <h2 className="mb-4 text-sm font-semibold">
+              Sprint Capacity Overview
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                Meetings + Tasks + Free
+              </span>
+            </h2>
             <CapacityBars data={capacitySummary} />
+          </div>
+
+          {/* Reassignment Panel */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <ReassignmentPanel data={capacitySummary} />
           </div>
 
           {/* Per-person breakdown */}

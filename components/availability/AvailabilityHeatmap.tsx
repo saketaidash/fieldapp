@@ -2,6 +2,7 @@
 
 import type { PersonAvailability } from "@/types/capacity";
 import { cn, formatDateShort, STATUS_LABELS } from "@/lib/utils";
+import { DayDetailPopover } from "./DayDetailPopover";
 
 interface Props {
   availability: PersonAvailability[];
@@ -26,7 +27,6 @@ export function AvailabilityHeatmap({ availability, startDate, endDate }: Props)
     );
   }
 
-  // Get unique days from first person's availability
   const days = availability[0]?.days ?? [];
 
   return (
@@ -40,6 +40,7 @@ export function AvailabilityHeatmap({ availability, startDate, endDate }: Props)
             <span>{label}</span>
           </div>
         ))}
+        <span className="ml-2 text-[10px] italic">Click a cell for details</span>
       </div>
 
       {/* Heatmap Grid */}
@@ -47,7 +48,7 @@ export function AvailabilityHeatmap({ availability, startDate, endDate }: Props)
         <div
           className="grid gap-1 min-w-max"
           style={{
-            gridTemplateColumns: `180px repeat(${days.length}, minmax(36px, 1fr))`,
+            gridTemplateColumns: `180px repeat(${days.length}, minmax(44px, 1fr))`,
           }}
         >
           {/* Header row */}
@@ -65,9 +66,8 @@ export function AvailabilityHeatmap({ availability, startDate, endDate }: Props)
 
           {/* Data rows */}
           {availability.map((person) => (
-            <>
+            <div key={person.upn} className="contents">
               <div
-                key={`name-${person.upn}`}
                 className="flex items-center pr-2 text-sm font-medium truncate"
                 title={person.upn}
               >
@@ -77,16 +77,29 @@ export function AvailabilityHeatmap({ availability, startDate, endDate }: Props)
                 <span className="truncate">{person.displayName}</span>
               </div>
               {person.days.map((day) => (
-                <div
+                <DayDetailPopover
                   key={`${person.upn}-${day.date}`}
-                  title={`${person.displayName} — ${day.date}: ${STATUS_LABELS[day.dominantStatus]} (${Math.round(day.freePercent)}% free)`}
-                  className={cn(
-                    "h-8 rounded cursor-default transition-colors",
-                    STATUS_CELL_COLORS[day.dominantStatus] ?? "bg-muted"
-                  )}
-                />
+                  personName={person.displayName}
+                  day={day}
+                >
+                  <div
+                    className={cn(
+                      "h-10 rounded flex flex-col items-center justify-center transition-colors",
+                      STATUS_CELL_COLORS[day.dominantStatus] ?? "bg-muted"
+                    )}
+                  >
+                    {day.meetingCount > 0 && (
+                      <span className="text-[10px] font-semibold leading-none">
+                        {day.meetingCount}
+                      </span>
+                    )}
+                    <span className="text-[9px] text-muted-foreground leading-none">
+                      {Math.round(day.freePercent)}%
+                    </span>
+                  </div>
+                </DayDetailPopover>
               ))}
-            </>
+            </div>
           ))}
         </div>
       </div>

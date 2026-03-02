@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
+  Crosshair,
   Search,
   Calendar,
   BarChart3,
@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Command Center", icon: Crosshair },
   { href: "/jql-explorer", label: "JQL Explorer", icon: Search },
   { href: "/availability", label: "Availability", icon: Calendar },
   { href: "/sprint-capacity", label: "Sprint Capacity", icon: BarChart3 },

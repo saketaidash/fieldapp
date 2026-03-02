@@ -5,7 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard",
+  "/dashboard": "Command Center",
   "/jql-explorer": "JQL Explorer",
   "/availability": "Team Availability",
   "/sprint-capacity": "Sprint Capacity",
